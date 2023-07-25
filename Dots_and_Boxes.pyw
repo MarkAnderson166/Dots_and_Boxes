@@ -10,42 +10,50 @@ import time
 
 root = tk.Tk()
 root.title("Dots_and_Boxes")
-boxSize = 60
+boxSize = 50
 halfSize = int(boxSize/2)
-boardSize = boxSize*11
+gridSize = 8
+boardSize = boxSize*(gridSize+1)
 canvas = tk.Canvas(root, height=boardSize+boxSize, width=boardSize)
 canvas.pack()
 canvas.configure(bg='dark grey')
 
-gameState = [[[False, False, False, False, False] for i in range(10)] for j in range(10)]
-scoreRed  = 0
-scoreBlue = 0
-turnColor = "red"
-difficulty = 70 # percentage chance ai will do the smart thing
+gameState = [[[False, False, False, False, False] for i in range(gridSize)] for j in range(gridSize)]
+score1 = 0
+score2 = 0
+colors =['red','green','blue','orange','yellow','purple','pink','cyan']
+player1 = random.choice(colors)
+colors.remove(player1)
+player2 = random.choice(colors)
+currentTurn = player1
+difficulty = 80 # percentage chance ai will do the smart thing
 
 # ------------------------------ #
 # ------  GUI and basics  ------ #
 # ------------------------------ # 
 
+def printDebug(str):
+  #if 1:
+  if 'stupid' in str:
+    print(str)
+
 def drawString(textMes):
   canvas.delete("drawString")
   root.update()
   canvas.create_text(5,boardSize+boxSize-3, tag="drawString",
-      anchor="sw", font="Times 10", text=textMes)
+      anchor="sw", font="Times "+str(gridSize), text=textMes)
 
 def drawGUI(): 
   bs = boxSize 
   for i in range (halfSize, boardSize+halfSize, bs):
-    for j in range (halfSize, boardSize+halfSize, bs): 
-      #canvas.create_line(i, j, boardSize-bs, j, width=3, fill="grey" )
-      #canvas.create_line(i, j, i, boardSize-bs, width=3, fill="grey" )   
+    for j in range (halfSize, boardSize+halfSize, bs):   
       canvas.create_oval(i-2, j+2, i+2, j-2, width=6 )
-  canvas.create_rectangle( (boardSize/2)-bs*2, boardSize,
+  canvas.create_rectangle( (boardSize/2)-bs*3, boardSize,
                            (boardSize/2)-bs, boardSize+bs,
-                           width=2, fill="red")
+                           width=2, fill=player1)
   canvas.create_rectangle( (boardSize/2)+bs, boardSize,
-                           (boardSize/2)+bs*2, boardSize+bs,
-                           width=2, fill="blue")
+                           (boardSize/2)+bs*3, boardSize+bs,
+                           width=2, fill=player2)
 
 def drawBox(c,r,boxcolor):
   bs = boxSize
@@ -56,10 +64,10 @@ def drawBox(c,r,boxcolor):
 
 def lineClickLogic(c,r):
   r, r3, c, c3 = int(r), int(str(r)[2]), int(c), int(str(c)[2])
-  if c3 > 2 and c3 < 7 and r3 < 2 and gameState[c][r][1]==0: takeTurn(c,r,1)
-  if r3 > 2 and r3 < 7 and c3 > 7 and gameState[c][r][2]==0: takeTurn(c,r,2)
-  if c3 > 2 and c3 < 7 and r3 > 7 and gameState[c][r][3]==0: takeTurn(c,r,3)
-  if r3 > 2 and r3 < 7 and c3 < 2 and gameState[c][r][4]==0: takeTurn(c,r,4)
+  if c3 > 1 and c3 < 8 and r3 < 1 and gameState[c][r][1]==0: takeTurn(c,r,1)
+  if r3 > 1 and r3 < 8 and c3 > 8 and gameState[c][r][2]==0: takeTurn(c,r,2)
+  if c3 > 1 and c3 < 8 and r3 > 8 and gameState[c][r][3]==0: takeTurn(c,r,3)
+  if r3 > 1 and r3 < 8 and c3 < 1 and gameState[c][r][4]==0: takeTurn(c,r,4)
 
 
 def drawLine(c,r,line):
@@ -73,44 +81,44 @@ def drawLine(c,r,line):
 
     if line == 2:
       x1, x2, y2 = x1 + boxSize, x2 + boxSize, y2 + boxSize
-      if c < 9: gameState[c+1][r][line+2] = True
+      if c < gridSize-1: gameState[c+1][r][line+2] = True
 
     if line == 3:
       y1, x2, y2 = y1 + boxSize, x2 + boxSize, y2 + boxSize
-      if r < 9: gameState[c][r+1][line-2] = True
+      if r < gridSize-1: gameState[c][r+1][line-2] = True
 
     if line == 4:
       y2 = y2 + boxSize
       gameState[c-1][r][line-2] = True
 
     canvas.create_line( x1, y1, x2, y2, width = 5 )
-    canvas.create_line( x1, y1, x2, y2, width = 7, fill = 'green', tags='highlight' )
-    canvas.create_line( x1, y1, x2, y2, width = 3, fill = 'yellow', tags='highlight' )
+    canvas.create_line( x1, y1, x2, y2, width = 7, fill = currentTurn, tags='highlight' )
+    canvas.create_line( x1, y1, x2, y2, width = 3, tags='highlight' )
 
     gameState[c][r][line] = True
 
 
 def updateScore():
-  global scoreRed, scoreBlue, turnColor
+  global score1, score2, currentTurn
   canvas.delete("redScore")
   canvas.delete("blueScore")
   canvas.delete("turnMarker")
   root.update()
   
-  if turnColor == "red":
-    xOffset, start, extent = boxSize*-1, 330, 60
-  else:
-    xOffset, start, extent = boxSize, 150, 60
-
-  canvas.create_arc( (boardSize/2)+xOffset, boardSize,
-                     (boardSize/2), boardSize+boxSize,
-                      start = start, extent = extent,
-                      width=2, tag="turnMarker", fill="green")
+  #if currentTurn == player1:
+  #  xOffset, start, extent = boxSize*-1, 330, 60
+  #else:
+  #  xOffset, start, extent = boxSize, 150, 60
+  #
+  #canvas.create_arc( (boardSize/2)+xOffset, boardSize,
+  #                   (boardSize/2), boardSize+boxSize,
+  #                    start = start, extent = extent,
+  #                    width=2, tag="turnMarker", fill="green")
     
   canvas.create_text((boardSize/2)-boxSize*2, boardSize+boxSize,tag="redScore",
-                      anchor="sw", font="Times 45", text=scoreRed)
+                      anchor="sw", font="Times "+str(boxSize-10), text=score1)
   canvas.create_text((boardSize/2)+boxSize, boardSize+boxSize, tag="blueScore",
-                      anchor="sw", font="Times 45", text=scoreBlue)
+                      anchor="sw", font="Times "+str(boxSize-10), text=score2)
 
 
 # ------------------------------- #
@@ -122,31 +130,30 @@ def takeTurn(c,r,l):
   if checkAllBoxes():
     autoTurn()
   else:
-    global turnColor
-    turnColor = "blue"
+    global currentTurn
+    currentTurn = player2
   updateScore()
   aiTakeTurn()
 
 
 def checkAllBoxes():
-  global scoreRed, scoreBlue
-  for i in range(10):
-    for j in range(10):
+  global score1, score2
+  for i in range(gridSize):
+    for j in range(gridSize):
       if sum(gameState[i][j]) == 4:
         gameState[i][j][0] = 1
-        if turnColor == "red": scoreRed += 1
-        if turnColor == "blue": scoreBlue += 1
-        drawBox(i,j,turnColor)
+        if currentTurn == player1: score1 += 1
+        if currentTurn == player2: score2 += 1
+        drawBox(i,j,currentTurn)
         checkAllBoxes()
         return 1
       
 
 # auto complete for chain wins
 def autoTurn():
-  for i in range(10):
-    for j in range(10):
+  for i in range(gridSize):
+    for j in range(gridSize):
       if sum(gameState[i][j]) == 3:
-        
         for k in range(1,5,1):
           if gameState[i][j][k] == False: drawLine(i,j,k)
         checkAllBoxes()
@@ -167,8 +174,8 @@ def aiTakeTurn():
   idiotMoves = []
   randomMoves = []
 
-  for i in range(10):
-    for j in range(10):
+  for i in range(gridSize):
+    for j in range(gridSize):
       if sum(gameState[i][j]) == 3:
         for k in range(1,5,1):
           if gameState[i][j][k] == False:
@@ -186,6 +193,41 @@ def aiTakeTurn():
           if gameState[i][j][k] == False:
             randomMoves.append(str(i)+str(j)+str(k))
 
+  #print(idiotMoves,' idiotMoves')
+  #print(scoringMoves,' scoringMoves')
+  #print(decentMoves,' decentMoves')
+
+  # -- as every move is in our gamestate dataset twice, we need to convert
+  # -- the moves in the idiot list to their counterpart then remove them
+  for move in idiotMoves:
+    move2 = '-blank-'
+    if move[2] == '1':
+      move2 = move[0]+str(int(move[1])-1)+str(int(move[2])+2)
+    if move[2] == '2':
+      move2 = str(int(move[0])+1)+move[1]+str(int(move[2])+2)
+      #move2 = str(int(move)+102)
+    if move[2] == '3':
+      move2 = move[0]+str(int(move[1])+1)+str(int(move[2])-2)
+      #move2 = str(int(move)+8)
+    if move[2] == '4':
+      move2 = str(int(move[0])-1)+move[1]+str(int(move[2])-2)
+      #move2 = str(int(move)-102)
+
+    printDebug(move+ ' is in idiot list')
+    printDebug(move2+' is the same move')
+
+    if move2 in scoringMoves:
+      scoringMoves.remove(move2)
+    if move2 in decentMoves:
+      decentMoves.remove(move2)
+    if move2 in randomMoves:
+      randomMoves.remove(move2)
+
+  #print(idiotMoves,' idiotMoves')
+  #print(scoringMoves,' scoringMoves')
+  #print(decentMoves,' decentMoves')
+
+
   # -- choose move
   global difficulty
   dice = random.randint(1,100)
@@ -193,17 +235,17 @@ def aiTakeTurn():
     # @90 if theres a scoring move avail, ai take it 9/10
   if dice < difficulty and len(scoringMoves):
     choice = random.choice(scoringMoves)
-    print('blue making scoring move')
+    printDebug('blue making scoring move')
 
     # @90 if theres no scoring move avail, ai do something really stupid 1/10
   elif dice > difficulty and len(idiotMoves):
     choice = random.choice(idiotMoves)
-    print('blue making idiot move')
+    printDebug('blue making a stupid move')
 
     # @90 we'll pick a decent over a random 9/10
   elif dice < difficulty and len(decentMoves):
     choice = random.choice(decentMoves)
-    print('blue making decent move')
+    printDebug('blue making decent move')
 
     # if all else fails, pick a random, if random is empty, pick anything
   else:
@@ -211,18 +253,18 @@ def aiTakeTurn():
       choice = random.choice(randomMoves)
     else:
       choice = random.choice(randomMoves+decentMoves+idiotMoves+scoringMoves)
-    print('blue making random move')
+    printDebug('player2 making random move')
 
   # -- take turn
   time.sleep(.4)
+  printDebug('player2 making move: '+choice)
   drawLine(int(choice[0]),int(choice[1]),int(choice[2]))
   if checkAllBoxes():
     autoTurn()
   else:
-    global turnColor
-    turnColor = "red"
+    global currentTurn
+    currentTurn = player1
   updateScore()
-
 
 
 # ------------------------------- #
@@ -236,7 +278,7 @@ updateScore()
 
 def click(event):
   x, y = (event.x-halfSize)/boxSize, (event.y-halfSize)/boxSize
-  if x > 0 and x < 10 and y > 0 and y < 10:
+  if x > 0 and x < gridSize and y > 0 and y < gridSize:
     lineClickLogic(x,y)
 
 root.bind("<Button-1>", click)
